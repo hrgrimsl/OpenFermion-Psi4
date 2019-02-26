@@ -1,7 +1,7 @@
 """This is a template for psi4 input format."""
 import numpy
 import sys
-
+import os
 from openfermion.config import *
 from openfermion.hamiltonians import MolecularData
 from openfermion.ops import general_basis_change
@@ -77,50 +77,72 @@ if &run_scf:
         # Get orbitals and Fock matrix.
         molecule.hf_energy = hf_energy
         molecule.nuclear_repulsion = mol.nuclear_repulsion_energy()
+
+        wfn = hf_wavefunction
+        
+        #Fix wavefunction - remove if you're not the Harpster!
+        if len(np.array(wfn.Ca_subset("AO", "OCC")))==10:
+            a_occ = np.array(wfn.Ca_subset("AO", "OCC"))
+            b_occ = np.array(wfn.Cb_subset("AO", "OCC"))
+            a_nocc = np.array(wfn.Ca_subset("AO", "VIR")) 
+            b_nocc = np.array(wfn.Cb_subset("AO", "OCC"))
+            a_occ = np.hstack((np.hstack((np.hstack((np.hstack((a_occ[:,0:2], a_occ[:,6:7])),a_occ[:,3:6])), a_occ[:,2:3])), a_occ[:,8:9]))
+            b_occ = np.hstack((np.hstack((np.hstack((np.hstack((b_occ[:,0:2], b_occ[:,6:7])),b_occ[:,3:6])), b_occ[:,2:3])), b_occ[:,8:9]))
+            newa = np.hstack((a_occ, a_nocc))
+            newb = np.hstack((b_occ, b_nocc))
+            wfn.Ca().copy(psi4.core.Matrix.from_array(newa))
+            wfn.Cb().copy(psi4.core.Matrix.from_array(newb))
+            print('Swapped orbitals 3 and 7 of 10') 
+
         molecule.canonical_orbitals = numpy.asarray(hf_wavefunction.Ca())
 
+
+
         if &localize:
-            wfn = hf_wavefunction
+
             basis_ = wfn.basisset()
             C_occ = wfn.Ca_subset("AO", "OCC") # canonical C_occ coefficients
             print(np.array(C_occ))
-            Local = psi4.core.Localizer.build("PIPEK_MEZEY", basis_, C_occ) # Pipek-Mezey Localization
+            Local = psi4.core.Localizer.build("BOYS", basis_, C_occ) # Pipek-Mezey Localization
             Local.localize()
             new_alpha = np.array(Local.L)
 
             #Get bOCC locals
             C_occ = wfn.Cb_subset("AO", "OCC")
 
-            Local = psi4.core.Localizer.build("PIPEK_MEZEY", basis_, C_occ)
+            Local = psi4.core.Localizer.build("BOYS", basis_, C_occ)
             Local.localize()
             new_beta = np.array(Local.L)
 
             #Get aNOCC locals
             C_nocc = wfn.Ca_subset("AO", "VIR")
             print(np.array(C_nocc))
-            Local = psi4.core.Localizer.build("PIPEK_MEZEY", basis_, C_nocc)
+            Local = psi4.core.Localizer.build("BOYS", basis_, C_nocc)
             Local.localize()
             new_alpha_noccs = np.array(Local.L)
 
             #Get bNOCC locals
             C_nocc = wfn.Cb_subset("AO", "VIR")
 
-            Local = psi4.core.Localizer.build("PIPEK_MEZEY", basis_, C_nocc)
+            Local = psi4.core.Localizer.build("BOYS", basis_, C_nocc)
             Local.localize()
             new_beta_noccs = np.array(Local.L)
 
             newa = np.hstack((new_alpha, new_alpha_noccs))
             newb = np.hstack((new_beta, new_beta_noccs))
-            print(newa)
+            print('Localizing!')
             wfn.Ca().copy(psi4.core.Matrix.from_array(newa))
             wfn.Cb().copy(psi4.core.Matrix.from_array(newb))
 
 
+
+ 
         molecule.overlap_integrals = numpy.asarray(hf_wavefunction.S())
         molecule.n_orbitals = molecule.canonical_orbitals.shape[0]
         molecule.n_qubits = 2 * molecule.n_orbitals
         molecule.orbital_energies = numpy.asarray(hf_wavefunction.epsilon_a())
         molecule.fock_matrix = numpy.asarray(hf_wavefunction.Fa())
+
 
 
 
@@ -137,8 +159,9 @@ if &run_scf:
         two_body_integrals = general_basis_change(
             two_body_integrals, molecule.canonical_orbitals, (1, 1, 0, 0))
         molecule.two_body_integrals = two_body_integrals
-
-
+        os.system('rm N2.molden')
+        psi4.driver.molden(wfn, 'N2.molden')
+        
 
 
         molecule.save()
