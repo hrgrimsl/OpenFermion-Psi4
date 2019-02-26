@@ -81,18 +81,20 @@ if &run_scf:
         wfn = hf_wavefunction
         
         #Fix wavefunction - remove if you're not the Harpster!
-        if len(np.array(wfn.Ca_subset("AO", "OCC")))==10:
+
+        for i in &swaps:
+            small, big = i
             a_occ = np.array(wfn.Ca_subset("AO", "OCC"))
             b_occ = np.array(wfn.Cb_subset("AO", "OCC"))
             a_nocc = np.array(wfn.Ca_subset("AO", "VIR")) 
-            b_nocc = np.array(wfn.Cb_subset("AO", "OCC"))
-            a_occ = np.hstack((np.hstack((np.hstack((np.hstack((a_occ[:,0:2], a_occ[:,6:7])),a_occ[:,3:6])), a_occ[:,2:3])), a_occ[:,8:9]))
-            b_occ = np.hstack((np.hstack((np.hstack((np.hstack((b_occ[:,0:2], b_occ[:,6:7])),b_occ[:,3:6])), b_occ[:,2:3])), b_occ[:,8:9]))
+            b_nocc = np.array(wfn.Cb_subset("AO", "VIR"))
+            a_occ = np.hstack((np.hstack((np.hstack((np.hstack((a_occ[:,0:small], a_occ[:,big:big+1])),a_occ[:,small+1:big])), a_occ[:,small:small+1])), a_occ[:,big+1:]))
+            b_occ = np.hstack((np.hstack((np.hstack((np.hstack((b_occ[:,0:small], b_occ[:,big:big+1])),b_occ[:,small+1:big])), b_occ[:,small:small+1])), b_occ[:,big+1:]))
             newa = np.hstack((a_occ, a_nocc))
             newb = np.hstack((b_occ, b_nocc))
             wfn.Ca().copy(psi4.core.Matrix.from_array(newa))
             wfn.Cb().copy(psi4.core.Matrix.from_array(newb))
-            print('Swapped orbitals 3 and 7 of 10') 
+            print('Swapped orbitals '+str(small)+' '+str(big)) 
 
         molecule.canonical_orbitals = numpy.asarray(hf_wavefunction.Ca())
 

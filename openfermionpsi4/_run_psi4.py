@@ -60,7 +60,10 @@ def generate_psi4_input(molecule,
                         localize,
                         tolerate_error,
                         memory,
-                        template_file):
+                        template_file,
+                        swaps
+                        ):
+
     """This function creates and saves a psi4 input file.
 
     Args:
@@ -135,6 +138,8 @@ def generate_psi4_input(molecule,
                      for line in input_content]
     input_content = [re.sub('&memory', str(memory), line)
                      for line in input_content]
+    input_content = [re.sub('&swaps', str(swaps), line)
+                     for line in input_content]
 
     # Write input file and return handle.
     input_file = molecule.filename + '.inp'
@@ -176,7 +181,8 @@ def run_psi4(molecule,
              delete_output=False,
              memory=8000,
              template_file=None,
-             output_filename=None):
+             output_filename=None,
+             swaps = []):
     if output_filename == None:
         output_filename = molecule.filename
     """This function runs a Psi4 calculation.
@@ -212,7 +218,9 @@ def run_psi4(molecule,
                                      localize,
                                      tolerate_error,
                                      memory,
-                                     template_file)
+                                     template_file,
+                                     swaps
+                                     )
 
     # Run psi4.
     output_file = output_filename + '.out'
