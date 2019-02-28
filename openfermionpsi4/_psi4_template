@@ -30,6 +30,7 @@ molecule = MolecularData(&geometry,
 molecule mol {
 &geo_string
 symmetry c1
+
 }
 mol.set_multiplicity(&multiplicity)
 mol.set_molecular_charge(&charge)
