@@ -80,27 +80,6 @@ if &run_scf:
         molecule.nuclear_repulsion = mol.nuclear_repulsion_energy()
 
         wfn = hf_wavefunction
-        
-        #Fix wavefunction - remove if you're not the Harpster!
-
-        for i in &swaps:
-            small, big = i
-            a_occ = np.array(wfn.Ca_subset("AO", "OCC"))
-            b_occ = np.array(wfn.Cb_subset("AO", "OCC"))
-            a_nocc = np.array(wfn.Ca_subset("AO", "VIR")) 
-            b_nocc = np.array(wfn.Cb_subset("AO", "VIR"))
-            a_occ = np.hstack((np.hstack((np.hstack((np.hstack((a_occ[:,0:small], a_occ[:,big:big+1])),a_occ[:,small+1:big])), a_occ[:,small:small+1])), a_occ[:,big+1:]))
-            b_occ = np.hstack((np.hstack((np.hstack((np.hstack((b_occ[:,0:small], b_occ[:,big:big+1])),b_occ[:,small+1:big])), b_occ[:,small:small+1])), b_occ[:,big+1:]))
-            newa = np.hstack((a_occ, a_nocc))
-            newb = np.hstack((b_occ, b_nocc))
-            wfn.Ca().copy(psi4.core.Matrix.from_array(newa))
-            wfn.Cb().copy(psi4.core.Matrix.from_array(newb))
-            print('Swapped orbitals '+str(small)+' '+str(big)) 
-
-        molecule.canonical_orbitals = numpy.asarray(hf_wavefunction.Ca())
-
-
-
         if &localize:
 
             basis_ = wfn.basisset()
