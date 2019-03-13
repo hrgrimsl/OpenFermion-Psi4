@@ -125,7 +125,7 @@ if &run_scf:
             wfn.Ca().copy(psi4.core.Matrix.from_array(newa))
             wfn.Cb().copy(psi4.core.Matrix.from_array(newb))
 
-
+        
         molecule.overlap_integrals = numpy.asarray(hf_wavefunction.S())
 
         molecule.n_orbitals = molecule.canonical_orbitals.shape[0]
@@ -147,8 +147,8 @@ if &run_scf:
         two_body_integrals = general_basis_change(
             two_body_integrals, molecule.canonical_orbitals, (1, 1, 0, 0))
         molecule.two_body_integrals = two_body_integrals
-        os.system('rm N2.molden')
-        psi4.driver.molden(wfn, 'N2.molden')
+        wfile = outfile_name()+'.molden'
+        psi4.driver.molden(wfn, str(wfile))
         
 
 
